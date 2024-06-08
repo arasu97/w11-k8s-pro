@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: color
+  labels:
+    app: color
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: color
+  template:
+    metadata: 
+      labels:
+        app: color
+    spec:
+      containers:
+      - name: color
+        image: arasu528/colorapp-node:dockerimg
+        resources:
+          requests:
+            cpu: .2
+            memory: "200Mi"
+          limits:
+            cpu: .5
+            memory: "500Mi"  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: color
+spec:
+  type: LoadBalancer
+  selector:
+    app: color  # Match the deployment label
+  ports:
+  - port: 80
+    targetPort: 3000
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: color
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: color
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+
